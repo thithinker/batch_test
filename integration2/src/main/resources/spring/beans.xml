@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="worldDataSource"/>
+	</bean>
+	
+	<bean id="newJdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="newWorldDataSource"/>
+	</bean>
+	<bean id="cityDao" class="test.integration2.dao.CityDaoJdbcImpl">
+		<property name="jdbcTemplate" ref="jdbcTemplate"/>
+		<property name="SELECT_ALL" value="SELECT * FROM CITY"/>
+	</bean>
+	<bean id="newCityDao" class="test.integration2.dao.CityDaoJdbcImpl">
+		<property name="jdbcTemplate" ref="newJdbcTemplate"/>
+		<property name="SELECT_ALL" value="SELECT * FROM CITY"/>
+	</bean>
+</beans>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:batch="http://www.springframework.org/schema/batch"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/batch
+       http://www.springframework.org/schema/batch/spring-batch.xsd
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+	   http://www.springframework.org/schema/task
+	   http://www.springframework.org/schema/task/spring-task.xsd">
+	
+	<batch:job id="cpDataToNewDBJob" restartable="true">
+		<batch:step id="readDataFromOldDBStep" next="readDataFromNewDBStep" allow-start-if-complete="true">
+			<batch:tasklet transaction-manager="worldTXManager" ref="readDataFromOldDBTasklet"/>
+		</batch:step>
+		<batch:step id="readDataFromNewDBStep" allow-start-if-complete="true">
+			<batch:tasklet transaction-manager="worldTXManager" ref="readDataFromNewDBTasklet"/>
+		</batch:step>
+	</batch:job>
+	
+	<bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean"/>
+	<bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository"/>
+	</bean>
+	
+	<bean id="readDataFromOldDBTasklet" class="test.integration2.task.ReadDataFromOldDBTasklet" scope="step">
+		<property name="cityDao" ref="cityDao"/>
+	</bean>
+	<bean id="readDataFromNewDBTasklet" class="test.integration2.task.ReadDataFromNewDBTasklet" scope="step">
+		<property name="cityDao" ref="newCityDao"/>
+	</bean>
+	
+	<bean id="jobRegistry" class="org.springframework.batch.core.configuration.support.MapJobRegistry" />
+	<task:scheduled-tasks>
+		<task:scheduled ref="readDataFromOldDBJobLauncher" method="exec" cron="*/1 * * * * *"/>
+	</task:scheduled-tasks>
+	
+	<bean id="readDataFromOldDBJobLauncher" class="test.integration2.task.ReadDataFromOldDBJobLauncher">
+		<property name="jobLauncher" ref="jobLauncher"/>
+		<property name="job" ref="cpDataToNewDBJob"/>
+	</bean>
+</beans>
