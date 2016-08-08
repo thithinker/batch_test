@@ -11,13 +11,49 @@
 	   http://www.springframework.org/schema/task/spring-task.xsd">
 	
 	<batch:job id="cpDataToNewDBJob" restartable="true">
-		<batch:step id="readDataFromOldDBStep" next="readDataFromNewDBStep" allow-start-if-complete="true">
+		<batch:step id="readDataFromOldDBStep" next="readWriteStep" allow-start-if-complete="true">
 			<batch:tasklet transaction-manager="worldTXManager" ref="readDataFromOldDBTasklet"/>
+		</batch:step>
+		<batch:step id="readWriteStep" next="readDataFromNewDBStep" allow-start-if-complete="true">
+			<batch:tasklet transaction-manager="worldTXManager">
+				<batch:chunk reader="cityReader" processor="itemFileProcessor" writer="itemJDBCWriter" commit-interval="1000"/>
+			</batch:tasklet>
 		</batch:step>
 		<batch:step id="readDataFromNewDBStep" allow-start-if-complete="true">
 			<batch:tasklet transaction-manager="worldTXManager" ref="readDataFromNewDBTasklet"/>
 		</batch:step>
 	</batch:job>
+	
+	<bean id="cityReader" class="org.springframework.batch.item.database.JdbcCursorItemReader">
+		<property name="dataSource" ref="worldDataSource"/>
+		<property name="sql" value="SELECT * FROM CITY"/>
+		<property name="rowMapper" ref="cityRowMapper"/>
+	</bean>
+	<bean id="cityRowMapper" class="test.integration2.dao.CityRowMapper"/>
+	
+	<bean id="itemFileProcessor" class="test.integration2.task.ItemFileProessor"/>
+	
+	<bean id="itemFileWriter" class="org.springframework.batch.item.file.FlatFileItemWriter">
+	    <property name="resource" value="file:target/test-outputs/output.txt" />
+	    <property name="lineAggregator">
+	        <bean class="org.springframework.batch.item.file.transform.PassThroughLineAggregator"/>
+	    </property>
+	</bean>
+	
+	<bean id="itemJDBCWriter" class="org.springframework.batch.item.database.JdbcBatchItemWriter">
+		<property name="dataSource" ref="newWorldDataSource" />
+		<property name="sql">
+		  <value>
+			<![CDATA[	
+				insert into city(name,countrycode,district,population) values (:name, :countryCode, :district, :population)
+			]]>
+		  </value>
+		</property>
+		<!-- It will take care matching between object property and sql name parameter -->
+		<property name="itemSqlParameterSourceProvider">
+			<bean class="org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider" />
+		</property>
+	</bean>
 	
 	<bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean"/>
 	<bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">

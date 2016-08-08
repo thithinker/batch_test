@@ -1,5 +1,7 @@
 package test.integration2.bean;
 
+import org.springframework.core.style.ToStringCreator;
+
 public class City {
 	private Integer id;
 	private String name;
@@ -35,6 +37,12 @@ public class City {
 	}
 	public void setPopulation(Integer population) {
 		this.population = population;
+	}
+	
+	@Override
+	public String toString() {
+		return new ToStringCreator(this).append("id", id).append("name", name).
+				append("countryCode", countryCode).append("district", district).append("population", population).toString();
 	}
 	
 }

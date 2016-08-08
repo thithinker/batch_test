@@ -21,7 +21,7 @@ public class ReadDataFromOldDBTasklet implements Tasklet{
 	public RepeatStatus execute(StepContribution arg0, ChunkContext arg1) throws Exception {
 		LOGGER.warn("execute extract data from old db....");
 		List<City> cities = cityDao.getAllCities();
-		int sleep = new Random().nextInt(10000);
+		int sleep = new Random().nextInt(5000);
 		LOGGER.warn("I will sleep " + sleep + " mm...");
 		Thread.sleep(sleep);
 		LOGGER.warn("Got " + cities.size() + " record(s).");
